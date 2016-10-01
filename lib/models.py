@@ -1,24 +1,37 @@
-from peewee import *
+from peewee import (
+    PostgresqlDatabase,
+    Model,
+    ForeignKeyField,
+    CharField,
+    IntegerField,
+    FloatField,
+    BooleanField,
+    DateTimeField
+)
 
-psql_db = PostgresqlDatabase('database.db', user = 'postgres')
+psql_db = PostgresqlDatabase('database.db', user='postgres')
+
 
 class BaseModel(Model):                            #database model
-    class Meta :
+    class Meta:
         database = psql_db
+
 
 class User(BaseModel):
     user_id = ForeignKeyField()
     username = CharField()
     wallet_balance = IntegerField()
 
+
 class Bet(BaseModel) :
     bet_id = ForeignKeyField(User)
     sum_of_bet = IntegerField()
     bet_coeff = FloatField()                        #coefficient related to the user selected team/player
     bet_type = IntegerField()                       #-1 if bet set on "Loose", 1 if set on "Win", 0 if set on "Dead Heat"
-    bet_status = BooleanField(default = False)      #"False" for awaiting, "True" for done
+    bet_status = BooleanField(default=False)      #"False" for awaiting, "True" for done
 
-class Match(BaseModel) :
+
+class Match(BaseModel):
     match_id = ForeignKeyField(Sport_Type, League)
     date = DateTimeField()
     opp_1 = CharField()
@@ -29,11 +42,12 @@ class Match(BaseModel) :
     match_status = BooleanField(default=False)      #"False" for awaiting, "True" for done
 
 
-class Sport_Type(BaseModel) :
+class Sport_Type(BaseModel):
     sport_id = ForeignKeyField()
     sport = CharField()
 
-class League(BaseModel) :
+
+class League(BaseModel):
     league_id = ForeignKeyField(Sport_Type)
     league_name = CharField()
 
