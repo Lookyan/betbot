@@ -21,15 +21,6 @@ class User(BaseModel):
     balance = FloatField()
 
 
-class Bet(BaseModel):
-    user = ForeignKeyField(User)
-    match = ForeignKeyField(Match)
-    sum_of_bet = FloatField()
-    bet_coeff = FloatField()                        #coefficient related to the user selected team/player
-    bet_type = IntegerField()                       #-1 if bet set on "Loose", 1 if set on "Win", 0 if set on "Dead Heat"
-    bet_status = BooleanField(default=False)        #"False" for awaiting, "True" for done
-
-
 class Sport(BaseModel):
     name = CharField()
 
@@ -48,3 +39,12 @@ class Match(BaseModel):
     win2 = FloatField()
     draw = FloatField()
     match_status = BooleanField(default=False)  # "False" for awaiting, "True" for done
+
+
+class Bet(BaseModel):
+    user = ForeignKeyField(User)
+    match = ForeignKeyField(Match)
+    sum_of_bet = FloatField()
+    bet_coeff = FloatField()                        #coefficient related to the user selected team/player
+    bet_type = IntegerField()                       #-1 if bet set on "Loose", 1 if set on "Win", 0 if set on "Dead Heat"
+    bet_status = BooleanField(default=False)        #"False" for awaiting, "True" for done
