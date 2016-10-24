@@ -1,14 +1,23 @@
 from pprint import pprint
+import typing
 
 import requests
+from requests.structures import CaseInsensitiveDict
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) '
+                  'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36',
     'Referer': 'http://www.overbetting.net/v2/odds/'
 }
 
 
-def make_request(page=1):
+def make_request(page=1) -> (dict, CaseInsensitiveDict):
+    """
+
+    :param page: page of odds
+
+    :return: odds, response headers
+    """
     params = {
         'cache': '5sec',
         'expand': 'sport,category,tournament,teamHome,teamAway',
@@ -21,11 +30,16 @@ def make_request(page=1):
     return result, r.headers
 
 
-def extract():
+def extract() -> typing.Generator[list, None, None]:
+    """
+    Extracts all upcoming events with odds
 
-    games = []
+    :return: list of odds
+    """
+
     current_page = 1
     while True:
+        games = []
         result, response_headers = make_request(current_page)
         for game in result:
             current_game = {}
@@ -43,6 +57,7 @@ def extract():
                 elif odd['T'] == 3:
                     current_game['w2'] = odd['bid'][0]['C']
             games.append(current_game)
+        yield games
         current_page += 1
         if 'X-Pagination-Page-Count' in response_headers:
             if current_page >= int(response_headers['X-Pagination-Page-Count']):
@@ -50,7 +65,7 @@ def extract():
         else:
             break
 
-    pprint(games)
-
 if __name__ == '__main__':
-    extract()
+    game_extractor = extract()
+    for games in game_extractor:
+        pprint(games)
