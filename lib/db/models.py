@@ -11,6 +11,9 @@ from peewee import (
 from .connection import psql_db
 
 
+DEFAULT_BALANCE = 1000
+
+
 class BaseModel(Model):
     class Meta:
         database = psql_db
@@ -18,7 +21,11 @@ class BaseModel(Model):
 
 class User(BaseModel):
     username = CharField()
-    balance = FloatField()
+    balance = FloatField(default=DEFAULT_BALANCE)
+
+    @staticmethod
+    def get_user_by_chat_id(chat_id):
+        return User.get_or_create(username=chat_id)
 
 
 class Sport(BaseModel):
@@ -39,6 +46,11 @@ class Match(BaseModel):
     win2 = FloatField()
     draw = FloatField()
     match_status = BooleanField(default=False)  # "False" for awaiting, "True" for done
+
+    class Meta:
+        indexes = (
+            (('player1', 'player2', 'tournament', 'date'), True),
+        )
 
 
 class Bet(BaseModel):
