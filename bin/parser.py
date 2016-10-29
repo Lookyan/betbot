@@ -2,6 +2,7 @@ import datetime
 
 import requests
 import peewee
+import pika
 from bs4 import BeautifulSoup
 
 from lib.db.models import Sport
@@ -106,6 +107,27 @@ def parse(content, match_result=False):
     return result
 
 
+def post_to_psql(upcoming_matches, sport):
+    tournament, _ = Tournament.get_or_create(name=upcoming_matches['league_name'], sport=sport)
+
+    for upcoming_match in upcoming_matches['games']:
+        match = Match(
+            tournament=tournament,
+            date=datetime.datetime.fromtimestamp(int(upcoming_match['timestamp'])).strftime('%Y-%m-%d %H:%M:%S'),
+            player1=upcoming_match['home'],
+            player2=upcoming_match['away'],
+            win1=float(upcoming_match['odds'][0]),
+            draw=float(upcoming_match['odds'][1]),
+            win2=float(upcoming_match['odds'][2])
+        )
+        try:
+            match.save()
+        except peewee.IntegrityError:
+            psql_db.rollback()
+        except:
+            psql_db.rollback()
+
+
 if __name__ == '__main__':
 
     sport_name = 'soccer'
@@ -123,22 +145,4 @@ if __name__ == '__main__':
         matches_results = parse(matches_results_data)
 
         # add upcoming matches
-
-        tournament, _ = Tournament.get_or_create(name=upcoming_matches['league_name'], sport=sport)
-
-        for upcoming_match in upcoming_matches['games']:
-            match = Match(
-                tournament=tournament,
-                date=datetime.datetime.fromtimestamp(int(upcoming_match['timestamp'])).strftime('%Y-%m-%d %H:%M:%S'),
-                player1=upcoming_match['home'],
-                player2=upcoming_match['away'],
-                win1=float(upcoming_match['odds'][0]),
-                draw=float(upcoming_match['odds'][1]),
-                win2=float(upcoming_match['odds'][2])
-            )
-            try:
-                match.save()
-            except peewee.IntegrityError:
-                psql_db.rollback()
-            except:
-                psql_db.rollback()
+        post_to_psql(upcoming_matches, sport)
