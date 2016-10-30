@@ -19,15 +19,6 @@ class BaseModel(Model):
         database = psql_db
 
 
-class User(BaseModel):
-    username = CharField()
-    balance = FloatField(default=DEFAULT_BALANCE)
-
-    @staticmethod
-    def get_user_by_chat_id(chat_id):
-        return User.get_or_create(username=chat_id)
-
-
 class Sport(BaseModel):
     name = CharField()
 
@@ -53,10 +44,23 @@ class Match(BaseModel):
         )
 
 
+class User(BaseModel):
+    username = CharField()
+    balance = FloatField(default=DEFAULT_BALANCE)
+    chosen_sport = ForeignKeyField(Sport, null=True)
+    chosen_tournament = ForeignKeyField(Tournament, null=True)
+    chosen_match = ForeignKeyField(Match, null=True)
+    chosen_amount = FloatField(null=True)
+
+    @staticmethod
+    def get_user_by_chat_id(chat_id):
+        return User.get_or_create(username=chat_id)
+
+
 class Bet(BaseModel):
     user = ForeignKeyField(User)
     match = ForeignKeyField(Match)
     sum_of_bet = FloatField()
-    bet_coeff = FloatField()                        #coefficient related to the user selected team/player
-    bet_type = IntegerField()                       #-1 if bet set on "Loose", 1 if set on "Win", 0 if set on "Dead Heat"
-    bet_status = BooleanField(default=False)        #"False" for awaiting, "True" for done
+    bet_coeff = FloatField()                      # coefficient related to the user selected team/player
+    bet_type = IntegerField()                     # -1 if bet set on "Loose", 1 if set on "Win", 0 if set on "Dead Heat"
+    bet_status = BooleanField(default=False)      # "False" for awaiting, "True" for done
