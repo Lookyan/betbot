@@ -4,6 +4,7 @@ import json
 from aiotg import Bot
 
 from lib.db.models import User
+from lib.db.models import Sport
 
 bot = Bot(api_token=os.environ['API_KEY'])
 
@@ -12,22 +13,51 @@ bot = Bot(api_token=os.environ['API_KEY'])
 def start(chat, match):
     user, _ = User.get_user_by_chat_id(chat.id)
     markup = {
-        "keyboard": [["Make a bet"], ["Show rating"], ["Your bets"]],
-        "one_time_keyboard": True
+        'keyboard': [["Choose sport"], ["Show rating"], ["Your bets"], ["Your balance"]],
+        'one_time_keyboard': False
     }
-    return chat.send_text('Hello! Please make a bet. Your balance: {}'.format(user.balance), reply_markup=json.dumps(markup))
+    return chat.send_text(
+        'Hello! Please make a bet. Your balance: {}'.format(user.balance),
+        reply_markup=json.dumps(markup)
+    )
 
 
-@bot.command(r'/choose_sport')
+@bot.command(r'Your balance')
+def your_balance(chat, match):
+    user, _ = User.get_user_by_chat_id(chat.id)
+
+    return chat.send_text('Your balance: {}'.format(user.balance))
+
+
+@bot.command(r'Choose sport')
 def choose_sport(chat, match):
     user, _ = User.get_user_by_chat_id(chat.id)
-    return chat.send_text('Ok, choose sport')
+
+    markup = {
+        "keyboard": [],
+        "one_time_keyboard": False
+    }
+
+    sports = Sport.select()
+    for sport in sports:
+        markup["keyboard"].append(['/sport {}'.format(sport.name)])
+
+    return chat.send_text(
+        'Ok, choose sport',
+        reply_markup=json.dumps(markup)
+    )
 
 
 @bot.command(r'/sport (.+)')
 def sport(chat, match):
     user, _ = User.get_user_by_chat_id(chat.id)
-    return chat.send_text('Wow! {} is a good choice'.format(match.group(1)))
+    sport_name = match.group(1)
+    try:
+        sport = Sport.get(name=sport_name)
+    except Sport.DoesNotExist:
+        return chat.send_text('Wow! We have no such sport')
+
+    return chat.send_text('Wow! {} is a good choice'.format(sport.name))
 
 
 @bot.command(r'/champ (.+)')
