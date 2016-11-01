@@ -5,8 +5,7 @@ from urllib.request import urlopen
 import re
 
 html_doc = urlopen('https://www.championat.com/').read()
-soup = BeautifulSoup(html_doc)
-
+soup = BeautifulSoup(html_doc, 'html.parser')
 
 news =  soup.find_all('div', 'page__block livetable js-livetable')
 link = news[0].find_all('noscript')
