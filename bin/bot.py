@@ -11,7 +11,7 @@ from lib.db.connection import psql_db
 
 MAIN_MENU_STR = 'Main menu'
 
-bot=Bot(api_token='283000549:AAFE4xQv-oSM3DNAet3tgTXnUyPl2ED8dO0')
+bot = Bot(api_token=os.environ['API_KEY'])
 
 
 @bot.command(r'/start|{}'.format(MAIN_MENU_STR))

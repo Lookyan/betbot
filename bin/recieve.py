@@ -1,5 +1,6 @@
-import pika, asyncio
+import asyncio
 
+import pika
 from aiotg import Bot
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(
@@ -11,7 +12,7 @@ channel.queue_declare(queue='producing', durable=True)
 print(' [*] Waiting for messages. To exit press CTRL+C')
 
 async def send_results(chat_id, message):
-    bot = Bot(api_token='283000549:AAFE4xQv-oSM3DNAet3tgTXnUyPl2ED8dO0')
+    bot = Bot(api_token=os.environ['API_KEY'])
     await bot.send_message(chat_id, message)
 
 def callback(ch, method, properties, body):
