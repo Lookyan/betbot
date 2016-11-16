@@ -108,8 +108,7 @@ def sport(chat, match):
     user, _ = User.get_user_by_chat_id(chat.id)
     return chat.send_text('Your bet won!!! Your balance: 1026')
 
-chats=set()
-path='/home/alex/betbot/lib/id_list.txt'
+
 @bot.command('whoami')
 def whoami(chat,match):
     return chat.reply(chat.sender['id'])
