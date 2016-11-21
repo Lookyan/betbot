@@ -9,6 +9,7 @@ from peewee import (
 )
 
 from .connection import psql_db
+from .connection import database_manager
 
 
 DEFAULT_BALANCE = 1000
@@ -53,8 +54,11 @@ class User(BaseModel):
     chosen_amount = FloatField(null=True)
 
     @staticmethod
-    def get_user_by_chat_id(chat_id):
-        return User.get_or_create(username=chat_id)
+    async def get_user_by_chat_id(chat_id):
+        return await database_manager.create_or_get(
+            User,
+            username=chat_id
+        )
 
 
 class Bet(BaseModel):
