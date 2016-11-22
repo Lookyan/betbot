@@ -6,6 +6,7 @@ from aiotg import Bot
 from lib.db.models import User
 from lib.db.models import Sport
 from lib.db.models import Tournament
+from lib.db.models import Match
 from lib.db.connection import psql_db
 from lib.db.connection import database_manager
 
@@ -76,14 +77,16 @@ async def sport(chat, match):
             "one_time_keyboard": False
         }
         for tournament in tournaments:
-            markup['keyboard'].append([tournament.name])
+            markup['keyboard'].append(['/champ {}'.format(tournament.name)])
 
         markup['keyboard'].append([MAIN_MENU_STR])
     except Sport.DoesNotExist:
         await chat.send_text('Wow! We have no such sport')  # TODO: fix error handling
+        return
     except Exception as e:
         psql_db.rollback()
         await chat.send_text('Wrong sport...')
+        return
 
     await chat.send_text(
         'Wow! {} is a good choice! Please choose a tournament.'.format(sport.name),
@@ -94,12 +97,39 @@ async def sport(chat, match):
 @bot.command(r'/champ (.+)')
 async def championship(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
-    await chat.send_text('Great! You chose {}. Luck is on your side. Choose a game.'.format(match.group(1)))
+
+    tournament = await database_manager.get(
+        Tournament.select().where(Tournament.name == match.group(1))
+    )
+    user.chosen_tournament = tournament
+    await database_manager.update(user)
+
+    matches = await database_manager.execute(
+        Match.select().where(Match.tournament == tournament, Match.match_status == False)
+    )
+
+    markup = {
+        "keyboard": [],
+        "one_time_keyboard": False
+    }
+
+    for sport_match in matches:
+        markup['keyboard'].append(
+            ['/game {} - {} ({})'.format(sport_match.player1, sport_match.player2, sport_match.date)]
+        )
+
+    markup['keyboard'].append([MAIN_MENU_STR])
+
+    await chat.send_text(
+        'Great! You chose {}. Luck is on your side. Choose a game.'.format(match.group(1)),
+        reply_markup=json.dumps(markup)
+    )
 
 
 @bot.command(r'/game (.+)')
 async def game(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
+
     await chat.send_text('Great game! Coeffs are (1 - X - 2) : (1,26 - 2,34 - 2,75)')
 
 
