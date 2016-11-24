@@ -46,7 +46,7 @@ class Match(BaseModel):
 
 
 class User(BaseModel):
-    username = CharField()
+    username = CharField(unique=True)
     balance = FloatField(default=DEFAULT_BALANCE)
     chosen_sport = ForeignKeyField(Sport, null=True)
     chosen_tournament = ForeignKeyField(Tournament, null=True)

@@ -130,12 +130,44 @@ async def championship(chat, match):
 async def game(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
 
-    await chat.send_text('Great game! Coeffs are (1 - X - 2) : (1,26 - 2,34 - 2,75)')
+    # get players
+    # TODO: error handling
+    player1, player2 = match.group(1).split(' (', 1)[0].split(' - ', 1)
+
+    # find a match
+    current_match = await database_manager.get(
+        Match.select().where(Match.player1 == player1, Match.player2 == player2)  # TODO: add time determination
+    )
+
+    user.chosen_match = current_match
+    await database_manager.update(user)
+
+    markup = {
+        "keyboard": [
+            ['/makebet win1'],
+            ['/makebet draw'],
+            ['/makebet win2']
+        ],
+        "one_time_keyboard": False
+    }
+
+    markup['keyboard'].append([MAIN_MENU_STR])
+
+    await chat.send_text(
+        'Great game! \n {} \nCoeffs are (1 - X - 2) : \n({} - {} - {})'.format(
+            match.group(1),
+            current_match.win1,
+            current_match.draw,
+            current_match.win2
+        ),
+        reply_markup=json.dumps(markup)
+    )
 
 
 @bot.command(r'/makebet (.+)')
 async def make_bet(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
+
     await chat.send_text('Accepted! You will be noticed about results')
 
 
