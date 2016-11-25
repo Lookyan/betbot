@@ -14,6 +14,16 @@ from .connection import database_manager
 
 DEFAULT_BALANCE = 1000
 
+WIN1 = 1
+DRAW = 2
+WIN2 = 3
+
+GAME_TYPES = (
+    (WIN1, 'Win 1'),
+    (DRAW, 'Draw'),
+    (WIN2, 'Win 2'),
+)
+
 
 class BaseModel(Model):
     class Meta:
@@ -46,11 +56,13 @@ class Match(BaseModel):
 
 
 class User(BaseModel):
+
     username = CharField(unique=True)
     balance = FloatField(default=DEFAULT_BALANCE)
     chosen_sport = ForeignKeyField(Sport, null=True)
     chosen_tournament = ForeignKeyField(Tournament, null=True)
     chosen_match = ForeignKeyField(Match, null=True)
+    chosen_result = IntegerField(choices=GAME_TYPES, null=True)
     chosen_amount = FloatField(null=True)
 
     @staticmethod
@@ -64,7 +76,7 @@ class User(BaseModel):
 class Bet(BaseModel):
     user = ForeignKeyField(User)
     match = ForeignKeyField(Match)
-    sum_of_bet = FloatField()
+    amount = FloatField()
     bet_coeff = FloatField()                      # coefficient related to the user selected team/player
-    bet_type = IntegerField()                     # -1 if bet set on "Loose", 1 if set on "Win", 0 if set on "Dead Heat"
+    bet_type = IntegerField(choices=GAME_TYPES)   # -1 if bet set on "Loose", 1 if set on "Win", 0 if set on "Dead Heat"
     bet_status = BooleanField(default=False)      # "False" for awaiting, "True" for done

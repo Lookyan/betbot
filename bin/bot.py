@@ -7,6 +7,10 @@ from lib.db.models import User
 from lib.db.models import Sport
 from lib.db.models import Tournament
 from lib.db.models import Match
+from lib.db.models import Bet
+from lib.db.models import WIN1
+from lib.db.models import WIN2
+from lib.db.models import DRAW
 from lib.db.connection import psql_db
 from lib.db.connection import database_manager
 
@@ -168,16 +172,85 @@ async def game(chat, match):
 async def make_bet(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
 
-    await chat.send_text('Accepted! You will be noticed about results')
+    # get chosen match
+    chosen_match = user.chosen_match
+
+    choice = match.group(1)
+
+    # TODO: add approval
+
+    if choice == 'win1':
+        user.chosen_result = WIN1
+    elif choice == 'draw':
+        user.chosen_result = DRAW
+    elif choice == 'win2':
+        user.chosen_result = WIN2
+    else:
+        await chat.send_text('Wrong!')
+        return
+
+    await database_manager.update(user)
+
+    markup = {
+        "keyboard": [
+            [MAIN_MENU_STR]
+        ],
+        "one_time_keyboard": False
+    }
+
+    await chat.send_text(
+        'Please enter amount. Your balance {}'.format(user.balance),
+        reply_markup=json.dumps(markup)
+    )
+
+
+@bot.command(r'(\d+[\.\d+])')
+async def amount(chat, match):
+    user, _ = await User.get_user_by_chat_id(chat.id)
+
+    # TODO: check type
+    amount = float(match.group(1))
+
+    # TODO: check balance
+    # TODO: check chosen match
+
+    # bet creation
+
+    chosen_match = user.chosen_match
+
+    if user.chosen_result == WIN1:
+        bet_coeff = chosen_match.win1
+    elif user.chosen_result == WIN2:
+        bet_coeff = chosen_match.win2
+    else:
+        bet_coeff = chosen_match.draw
+
+    bet = {
+        'user': user,
+        'match': chosen_match,
+        'amount': amount,
+        'bet_coeff': bet_coeff,
+        'bet_type': user.chosen_result
+    }
+
+    # TODO: transaction mechanism
+    await database_manager.create(Bet, **bet)
+
+    user.balance -= amount
+    await database_manager.update(user)
+
+    await chat.send_text(
+        'Accepted! You will be noticed about results',
+    )
 
 
 @bot.command(r'/result')
-async def sport(chat, match):
+async def result(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
     await chat.send_text('Your bet won!!! Your balance: 1026')
 
 
-@bot.command('whoami')
+@bot.command(r'whoami')
 async def whoami(chat, match):
     await chat.reply(chat.sender['id'])
 
