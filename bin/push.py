@@ -28,13 +28,13 @@ def main():
     )
     channel = connection.channel()
 
-    channel.queue_declare(queue='producing', durable=True)
+    channel.queue_declare(queue='push', durable=True)
 
     channel.basic_qos(prefetch_count=1)
 
     channel.basic_consume(
         callback,
-        queue='producing'
+        queue='push'
     )
 
     channel.start_consuming()

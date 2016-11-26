@@ -78,5 +78,5 @@ class Bet(BaseModel):
     match = ForeignKeyField(Match)
     amount = FloatField()
     bet_coeff = FloatField()                      # coefficient related to the user selected team/player
-    bet_type = IntegerField(choices=GAME_TYPES)   # -1 if bet set on "Loose", 1 if set on "Win", 0 if set on "Dead Heat"
+    bet_type = IntegerField(choices=GAME_TYPES)
     bet_status = BooleanField(default=False)      # "False" for awaiting, "True" for done

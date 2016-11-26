@@ -6,9 +6,20 @@ import pika
 from bs4 import BeautifulSoup
 
 from lib.db.models import Sport
+from lib.db.models import Bet
 from lib.db.models import Match
 from lib.db.models import Tournament
+from lib.db.models import WIN1
+from lib.db.models import WIN2
+from lib.db.models import DRAW
 from lib.db.connection import psql_db
+
+connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+channel = connection.channel()
+channel.queue_declare(queue='push', durable=True)  # TODO: to config
+
+POSITIVE_MESSAGE = 'Your bet won'
+NEGATIVE_MESSAGE = 'Your bet lost'
 
 soccer_leagues = [
     '/england/premier-league/',
@@ -128,6 +139,43 @@ def post_to_psql(upcoming_matches, sport):
             psql_db.rollback()
 
 
+def send_result(chat_id, msg):
+    channel.basic_publish(
+        exchange='',
+        routing_key='push',
+        body='{}\a{}'.format(msg, chat_id),
+        properties=pika.BasicProperties(delivery_mode=2)
+    )
+
+
+def get_result(match_result: dict):
+    if match_result['winner'] == 1:
+        return WIN1
+    elif match_result['winner'] == 2:
+        return WIN2
+    else:
+        return DRAW
+
+
+def compute_results(matches_results: list):
+    for match_result in matches_results:
+        try:
+            match = Match.get(
+                player1=match_result['home'],
+                player2=match_result['away'],
+                date=datetime.datetime.fromtimestamp(int(match_result['timestamp'])).strftime('%Y-%m-%d %H:%M:%S')
+            )
+        except Match.DoesNotExist:
+            continue
+        result = get_result(match_result)
+        bets = Bet.select().where(Bet.match == match)
+        for bet in bets:
+            if bet.bet_type == result:
+                send_result(bet.user.username, POSITIVE_MESSAGE)
+            else:
+                send_result(bet.user.username, NEGATIVE_MESSAGE)
+
+
 if __name__ == '__main__':
 
     sport_name = 'soccer'
@@ -146,3 +194,5 @@ if __name__ == '__main__':
 
         # add upcoming matches
         post_to_psql(upcoming_matches, sport)
+
+        compute_results(matches_results['games'])
