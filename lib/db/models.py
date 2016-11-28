@@ -49,6 +49,14 @@ class Match(BaseModel):
     draw = FloatField()
     match_status = BooleanField(default=False)  # "False" for awaiting, "True" for done
 
+    def get_coeff_by_chosen_result(self, result):
+        if result == WIN1:
+            return self.win1
+        elif result == WIN2:
+            return self.win2
+        else:
+            return self.draw
+
     class Meta:
         indexes = (
             (('player1', 'player2', 'tournament', 'date'), True),
@@ -71,6 +79,19 @@ class User(BaseModel):
             User,
             username=chat_id
         )
+
+    async def save_chosen_result(self, choice):
+        if choice == 'win1':
+            self.chosen_result = WIN1
+        elif choice == 'draw':
+            self.chosen_result = DRAW
+        elif choice == 'win2':
+            self.chosen_result = WIN2
+        else:
+            return False
+
+        await database_manager.update(self)
+        return True
 
 
 class Bet(BaseModel):
