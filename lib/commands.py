@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 
 from aiotg import Bot
 
@@ -14,7 +15,8 @@ from lib.db.connection import database_manager
 
 MAIN_MENU_STR = 'Main menu'
 
-bot = Bot(api_token=os.environ['API_KEY'])
+bot = Bot(api_token=os.environ['API_KEY'], botan_token=os.environ['BOTAN_KEY'])
+logger = logging.getLogger(__name__)
 
 
 def get_reply_markup(keyboard: list) -> dict:

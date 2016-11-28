@@ -18,8 +18,8 @@ connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost')
 channel = connection.channel()
 channel.queue_declare(queue='push', durable=True)  # TODO: to config
 
-POSITIVE_MESSAGE = 'Your bet won'
-NEGATIVE_MESSAGE = 'Your bet lost'
+POSITIVE_MESSAGE = 'Your bet "{}" won! +{} Now your balance is {}'
+NEGATIVE_MESSAGE = 'Unfortunately, your bet "{}" lost.'
 
 soccer_leagues = [
     '/england/premier-league/',
@@ -168,12 +168,25 @@ def compute_results(matches_results: list):
         except Match.DoesNotExist:
             continue
         result = get_result(match_result)
-        bets = Bet.select().where(Bet.match == match)
+        bets = Bet.select().where(Bet.match == match, Bet.bet_status == False)
         for bet in bets:
+            current_user = bet.user
             if bet.bet_type == result:
-                send_result(bet.user.username, POSITIVE_MESSAGE)
+                current_user.balance += bet.bet_coeff * bet.amount
+                current_user.save()
+                send_result(
+                    current_user.username, POSITIVE_MESSAGE.format(
+                        '{} - {}'.format(match.player1, match.player2),
+                        bet.bet_coeff * bet.amount,
+                        current_user.balance
+                    )
+                )
             else:
-                send_result(bet.user.username, NEGATIVE_MESSAGE)
+                send_result(current_user.username, NEGATIVE_MESSAGE.format(
+                    '{} - {}'.format(match.player1, match.player2)
+                ))
+            bet.bet_status = True
+            bet.save()
 
 
 if __name__ == '__main__':
