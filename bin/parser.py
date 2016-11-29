@@ -1,4 +1,6 @@
 import datetime
+import time
+import logging
 
 import requests
 import peewee
@@ -13,6 +15,9 @@ from lib.db.models import WIN1
 from lib.db.models import WIN2
 from lib.db.models import DRAW
 from lib.db.connection import psql_db
+
+
+logger = logging.getLogger(__name__)
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
 channel = connection.channel()
@@ -193,22 +198,42 @@ def compute_results(matches_results: list):
 
 
 if __name__ == '__main__':
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
 
-    sport_name = 'soccer'
-    sport, _ = Sport.get_or_create(name=sport_name)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
 
-    for league in soccer_leagues:
+    formatter = logging.Formatter('[%(asctime)s][%(levelname)s] %(name)s - %(message)s')
 
-        r = requests.get(base_url + league)
-        content = r.content.decode()
-        soup = BeautifulSoup(content, 'html.parser')
-        upcoming_matches_data = soup.find(id='tournament-page-data-summary-fixtures').next
-        upcoming_matches = parse(upcoming_matches_data, match_result=True)
+    ch.setFormatter(formatter)
 
-        matches_results_data = soup.find(id='tournament-page-data-summary-results').next
-        matches_results = parse(matches_results_data)
+    logger.addHandler(ch)
 
-        # add upcoming matches
-        post_to_psql(upcoming_matches, sport)
+    while True:
 
-        compute_results(matches_results['games'])
+        logger.info('Starting new parsing')
+
+        sport_name = 'soccer'
+        sport, _ = Sport.get_or_create(name=sport_name)
+
+        for league in soccer_leagues:
+
+            r = requests.get(base_url + league)
+            content = r.content.decode()
+            soup = BeautifulSoup(content, 'html.parser')
+            upcoming_matches_data = soup.find(id='tournament-page-data-summary-fixtures').next
+            upcoming_matches = parse(upcoming_matches_data, match_result=True)
+
+            matches_results_data = soup.find(id='tournament-page-data-summary-results').next
+            matches_results = parse(matches_results_data)
+
+            # add upcoming matches
+            logger.info('Posting to psql')
+            post_to_psql(upcoming_matches, sport)
+
+            logger.info('Sending results')
+            compute_results(matches_results['games'])
+
+        logger.info('Waiting for next iteration')
+        time.sleep(600)
