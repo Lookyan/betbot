@@ -85,12 +85,10 @@ async def sport(chat, match):
             keyboard.append(['/champ {}'.format(tournament.name)])
 
     except Sport.DoesNotExist:
-        await chat.send_text('Wow! We have no such sport')  # TODO: fix error handling
-        return
+        return await chat.send_text('Wow! We have no such sport')
     except Exception as e:
         psql_db.rollback()
-        await chat.send_text('Wrong sport...')
-        return
+        return await chat.send_text('Wrong sport...')
 
     await chat.send_text(
         'Wow! {} is a good choice! Please choose a tournament.'.format(sport.name),
@@ -102,9 +100,13 @@ async def sport(chat, match):
 async def championship(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
 
-    tournament = await database_manager.get(
-        Tournament.select().where(Tournament.name == match.group(1))
-    )
+    try:
+        tournament = await database_manager.get(
+            Tournament.select().where(Tournament.name == match.group(1))
+        )
+    except Tournament.DoesNotExist:
+        return await chat.send_text('Unfortunately we have no such tournament')
+
     user.chosen_tournament = tournament
     await database_manager.update(user)
 
@@ -130,12 +132,20 @@ async def game(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
 
     # get players
-    # TODO: error handling
-    player1, player2 = match.group(1).split(' (', 1)[0].split(' - ', 1)
+    try:
+        players, date = match.group(1).split(' (', 1)
+        player1, player2 = players.split(' - ', 1)
+        date = date[:-2]
+    except (IndexError, ValueError):
+        return await chat.send_text('Unfortunately we have no such game')
 
     # find a match
     current_match = await database_manager.get(
-        Match.select().where(Match.player1 == player1, Match.player2 == player2)  # TODO: add time determination
+        Match.select().where(
+            Match.player1 == player1,
+            Match.player2 == player2,
+            Match.date == date
+        )
     )
 
     user.chosen_match = current_match

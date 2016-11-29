@@ -99,7 +99,7 @@ def parse(content, match_result=False):
                 game['event_id'] = events['AA']
                 if match_result:
                     game['odds'] = get_odds(game['event_id'])
-                    if '-' in game['odds']:
+                    if game['odds'] and '-' in game['odds']:
                         continue
             if 'AE' in events:
                 game['home'] = events['AE']
@@ -163,7 +163,8 @@ def compute_results(matches_results: list):
             match = Match.get(
                 player1=match_result['home'],
                 player2=match_result['away'],
-                date=datetime.datetime.fromtimestamp(int(match_result['timestamp'])).strftime('%Y-%m-%d %H:%M:%S')
+                date=datetime.datetime.fromtimestamp(int(match_result['timestamp'])).strftime('%Y-%m-%d %H:%M:%S'),
+                match_status=False
             )
         except Match.DoesNotExist:
             continue
@@ -187,6 +188,8 @@ def compute_results(matches_results: list):
                 ))
             bet.bet_status = True
             bet.save()
+        match.match_status = True
+        match.save()
 
 
 if __name__ == '__main__':
