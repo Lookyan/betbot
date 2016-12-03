@@ -177,6 +177,7 @@ def compute_results(matches_results: list):
         bets = Bet.select().where(Bet.match == match, Bet.bet_status == False)
         for bet in bets:
             current_user = bet.user
+            logger.info('Comparing bet "{}" with real "{}"'.format(bet.bet_type, result))
             if bet.bet_type == result:
                 current_user.balance += bet.bet_coeff * bet.amount
                 current_user.save()

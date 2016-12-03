@@ -5,5 +5,5 @@ Telegram bot for betting
 
 ## Requirements
 - Python 3.5
-- Postgresql 9.3.14
+- Postgresql
 - RabbitMQ 3.6.5
