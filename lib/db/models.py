@@ -57,6 +57,15 @@ class Match(BaseModel):
         else:
             return self.draw
 
+    @staticmethod
+    def get_text_result(result):
+        if result == WIN1:
+            return 'WIN1'
+        elif result == WIN2:
+            return 'WIN2'
+        else:
+            return 'DRAW'
+
     class Meta:
         indexes = (
             (('player1', 'player2', 'tournament', 'date'), True),

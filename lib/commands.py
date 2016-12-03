@@ -245,7 +245,7 @@ async def your_bets(chat, match):
             bet.match.player2,
             bet.amount,
             bet.bet_coeff,
-            bet.chosen_result
+            Match.get_text_result(bet.bet_type)
         )
         fmt_bets += current_bet
 
