@@ -154,9 +154,9 @@ def send_result(chat_id, msg):
 
 
 def get_result(match_result: dict):
-    if match_result['winner'] == 1:
+    if match_result['winner'] == 2:
         return WIN1
-    elif match_result['winner'] == 2:
+    elif match_result['winner'] == 1:
         return WIN2
     else:
         return DRAW
