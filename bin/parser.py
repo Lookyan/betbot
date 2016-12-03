@@ -117,7 +117,7 @@ def parse(content, match_result=False):
             if 'AH' in events:
                 game['away_goals'] = events['AH']
             if 'AS' in events:
-                game['winner'] = events['AS']  # 1 if home is winner, 2 if away is winner, draw otherwise
+                game['winner'] = events['AS']  # 2 if home is winner, 1 if away is winner, draw otherwise
             result['games'].append(game)
 
     return result
@@ -127,21 +127,22 @@ def post_to_psql(upcoming_matches, sport):
     tournament, _ = Tournament.get_or_create(name=upcoming_matches['league_name'], sport=sport)
 
     for upcoming_match in upcoming_matches['games']:
-        match = Match(
-            tournament=tournament,
-            date=datetime.datetime.fromtimestamp(int(upcoming_match['timestamp'])).strftime('%Y-%m-%d %H:%M:%S'),
-            player1=upcoming_match['home'],
-            player2=upcoming_match['away'],
-            win1=float(upcoming_match['odds'][0]),
-            draw=float(upcoming_match['odds'][1]),
-            win2=float(upcoming_match['odds'][2])
-        )
-        try:
-            match.save()
-        except peewee.IntegrityError:
-            psql_db.rollback()
-        except:
-            psql_db.rollback()
+        if upcoming_match['odds']:
+            match = Match(
+                tournament=tournament,
+                date=datetime.datetime.fromtimestamp(int(upcoming_match['timestamp'])).strftime('%Y-%m-%d %H:%M:%S'),
+                player1=upcoming_match['home'],
+                player2=upcoming_match['away'],
+                win1=float(upcoming_match['odds'][0]),
+                draw=float(upcoming_match['odds'][1]),
+                win2=float(upcoming_match['odds'][2])
+            )
+            try:
+                match.save()
+            except peewee.IntegrityError:
+                psql_db.rollback()
+            except:
+                psql_db.rollback()
 
 
 def send_result(chat_id, msg):
@@ -154,9 +155,9 @@ def send_result(chat_id, msg):
 
 
 def get_result(match_result: dict):
-    if match_result['winner'] == 2:
+    if match_result['home_goals'] > match_result['away_goals']:
         return WIN1
-    elif match_result['winner'] == 1:
+    elif match_result['home_goals'] < match_result['away_goals']:
         return WIN2
     else:
         return DRAW
@@ -177,7 +178,13 @@ def compute_results(matches_results: list):
         bets = Bet.select().where(Bet.match == match, Bet.bet_status == False)
         for bet in bets:
             current_user = bet.user
-            logger.info('Comparing bet "{}" with real "{}"'.format(bet.bet_type, result))
+            logger.info('[{}-{}]Comparing bet "{}" with real "{}"'.format(
+                match.player1,
+                match.player2,
+                bet.bet_type,
+                result
+            )
+            )
             if bet.bet_type == result:
                 current_user.balance += bet.bet_coeff * bet.amount
                 current_user.save()
