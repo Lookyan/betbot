@@ -199,7 +199,10 @@ async def amount(chat, match):
     # TODO: check type
     amount = float(match.group(1))
 
-    # TODO: check balance
+    if user.balance < amount:
+        return await chat.send_text(
+            'You have only {}\nPlease reenter'.format(user.balance)
+        )
     # TODO: check chosen match
 
     # bet creation
@@ -229,8 +232,25 @@ async def amount(chat, match):
 
 @bot.command(r'Your bets')
 async def your_bets(chat, match):
+    user, _ = await User.get_user_by_chat_id(chat.id)
+
+    bets = await database_manager.execute(
+        Bet.select().where(Bet.user == user, Bet.bet_status == False)
+    )
+
+    fmt_bets = ''
+    for bet in bets:
+        current_bet = '{}-{} [Amount: {} Coeff: {} Result: {}]\n\n'.format(
+            bet.match.player1,
+            bet.match.player2,
+            bet.amount,
+            bet.bet_coeff,
+            bet.chosen_result
+        )
+        fmt_bets += current_bet
+
     await chat.send_text(
-        'Your bets'
+        'Your current bets\n\n{}'.format(fmt_bets)
     )
 
 
