@@ -15,7 +15,7 @@ from lib.db.connection import database_manager
 
 MAIN_MENU_STR = 'Main menu'
 
-bot = Bot(api_token='283000549:AAFE4xQv-oSM3DNAet3tgTXnUyPl2ED8dO0')
+bot = Bot(api_token=os.environ['API_KEY'])
 logger = logging.getLogger(__name__)
 
 
