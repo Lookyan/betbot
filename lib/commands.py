@@ -11,6 +11,7 @@ from lib.db.models import Match
 from lib.db.models import Bet
 from lib.db.connection import psql_db
 from lib.db.connection import database_manager
+from lib.smiles import get_digit_smile
 
 
 MAIN_MENU_STR = 'Main menu'
@@ -270,8 +271,8 @@ async def show_rating(chat, match):
     )
 
     top = ''
-    for item in rank_table:
-        current_user = '{} - {} points\n'.format(item.username, item.balance)
+    for pos, item in enumerate(rank_table):
+        current_user = '{} - {} points\n'.format(get_digit_smile(pos + 1), item.balance)
         top += current_user
 
     await chat.send_text(
