@@ -259,10 +259,8 @@ async def your_bets(chat, match):
 async def show_rating(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
     #user rating
-    query = await database_manager.execute(User.select().where(User.balance > user.balance))
-    rank = 1
-    for i in query:
-        rank+=1
+    rank = await database_manager.count(User.select().where(User.balance > user.balance))
+    rank+=1
     #top 3 users
     rank_table = await database_manager.execute(
         User.select().order_by(User.balance.desc()).limit(3)
