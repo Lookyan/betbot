@@ -15,7 +15,7 @@ from lib.db.connection import database_manager
 
 MAIN_MENU_STR = 'Main menu'
 
-bot = Bot(api_token=os.environ['API_KEY'])
+bot = Bot(api_token='283000549:AAFE4xQv-oSM3DNAet3tgTXnUyPl2ED8dO0')
 logger = logging.getLogger(__name__)
 
 
@@ -238,6 +238,7 @@ async def your_bets(chat, match):
         Bet.select().where(Bet.user == user, Bet.bet_status == False)
     )
 
+
     fmt_bets = ''
     for bet in bets:
         current_bet = '{}-{} [Amount: {} Coeff: {} Result: {}]\n\n'.format(
@@ -256,8 +257,24 @@ async def your_bets(chat, match):
 
 @bot.command(r'Show rating')
 async def show_rating(chat, match):
+    user, _ = await User.get_user_by_chat_id(chat.id)
+    #user rating
+    query = await database_manager.execute(User.select().where(User.balance > user.balance))
+    rank = 1
+    for i in query:
+        rank+=1
+    #top 3 users
+    rank_table = await database_manager.execute(
+        User.select().order_by(User.balance.desc()).limit(3)
+    )
+    top = ''
+    for item in rank_table:
+        current_user = '{} - {} points\n'.format(item.username, item.balance)
+        top += current_user
+
+
     await chat.send_text(
-        'Rating!'
+        'Your rank is {}.\nHere is a top 3 players:\n{}'.format(rank,top)
     )
 
 
