@@ -192,12 +192,16 @@ async def make_bet(chat, match):
     )
 
 
-@bot.command(r'(\d+[\.\d]{0,1})')
+@bot.command(r'^[+]?\d+([.]\d+)?$')
 async def amount(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
 
-    # TODO: check type
-    amount = float(match.group(1))
+    try:
+        amount = float(match.group())
+    except (ValueError, TypeError):
+        return await chat.send_text(
+            'Wrong amount. Please reenter.'
+        )
 
     if user.balance < amount:
         return await chat.send_text(
@@ -238,7 +242,6 @@ async def your_bets(chat, match):
         Bet.select().where(Bet.user == user, Bet.bet_status == False)
     )
 
-
     fmt_bets = ''
     for bet in bets:
         current_bet = '{}-{} [Amount: {} Coeff: {} Result: {}]\n\n'.format(
@@ -258,21 +261,21 @@ async def your_bets(chat, match):
 @bot.command(r'Show rating')
 async def show_rating(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
-    #user rating
+
     rank = await database_manager.count(User.select().where(User.balance > user.balance))
-    rank+=1
-    #top 3 users
+
+    # top 3 users
     rank_table = await database_manager.execute(
         User.select().order_by(User.balance.desc()).limit(3)
     )
+
     top = ''
     for item in rank_table:
         current_user = '{} - {} points\n'.format(item.username, item.balance)
         top += current_user
 
-
     await chat.send_text(
-        'Your rank is {}.\nHere is a top 3 players:\n{}'.format(rank,top)
+        'Your rank is {}.\nHere is a top 3 players:\n{}'.format(rank + 1, top)
     )
 
 
