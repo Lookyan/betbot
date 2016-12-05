@@ -192,7 +192,7 @@ async def make_bet(chat, match):
     )
 
 
-@bot.command(r'(\d+[\.\d+])')
+@bot.command(r'(\d+[\.\d]{0,1})')
 async def amount(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
 
