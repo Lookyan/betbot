@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import json
 import logging
@@ -145,13 +146,21 @@ async def game(chat, match):
         return await chat.send_text('Unfortunately we have no such game')
 
     # find a match
-    current_match = await database_manager.get(
-        Match.select().where(
-            Match.player1 == player1,
-            Match.player2 == player2,
-            Match.date == date
+    try:
+        current_match = await database_manager.get(
+            Match.select().where(
+                Match.player1 == player1,
+                Match.player2 == player2,
+                Match.date == date
+            )
         )
-    )
+    except Match.DoesNotExist:
+        return await chat.send_text(
+            'Unfortunately we have no such game'
+        )
+
+    if current_match.date < datetime.now():
+        return await chat.send_text('Match has been already started, you can\'t make a bet.')
 
     user.chosen_match = current_match
     await database_manager.update(user)
