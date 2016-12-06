@@ -159,7 +159,7 @@ async def game(chat, match):
             'Unfortunately we have no such game'
         )
 
-    if current_match.date < datetime.now():
+    if not current_match.check_actual():
         return await chat.send_text('Match has been already started, you can\'t make a bet.')
 
     user.chosen_match = current_match
@@ -189,14 +189,19 @@ async def make_bet(chat, match):
     # get chosen match
     chosen_match = user.chosen_match
 
-    choice = match.group(1)
+    if not chosen_match.check_actual():
+        return await chat.send_text(
+            'Match {}-{} has been already started, you can\'t make a bet.'.format(
+                chosen_match.player1, chosen_match.player2
+            )
+        )
 
-    # TODO: add approval
+    choice = match.group(1)
 
     res = await user.save_chosen_result(choice)
 
     if not res:
-        return await chat.send_text('Wrong!')
+        return await chat.send_text('Smth went wrong!')
 
     await database_manager.update(user)
 
@@ -221,7 +226,20 @@ async def amount(chat, match):
         return await chat.send_text(
             'You have only {}\nPlease reenter'.format(user.balance)
         )
-    # TODO: check chosen match
+
+    chosen_match = user.chosen_match
+
+    if not chosen_match:
+        return await chat.send_text(
+            'Please choose a match first'
+        )
+
+    if not chosen_match.check_actual():
+        return await chat.send_text(
+            'Match {}-{} has been already started, you can\'t make a bet.'.format(
+                chosen_match.player1, chosen_match.player2
+            )
+        )
 
     # bet creation
 

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from peewee import (
     Model,
     ForeignKeyField,
@@ -56,6 +58,15 @@ class Match(BaseModel):
             return self.win2
         else:
             return self.draw
+
+    def check_actual(self) -> bool:
+        """
+        :return: True if match hasn't been started, False otherwise
+        """
+        if self.date > datetime.utcnow():
+            return True
+        else:
+            return False
 
     @staticmethod
     def get_text_result(result):
