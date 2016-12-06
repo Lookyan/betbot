@@ -83,7 +83,11 @@ async def sport(chat, match):
         )
         keyboard = []
         for tournament in tournaments:
-            keyboard.append(['/champ {}'.format(tournament.name)])
+            tournament_games_count = await database_manager.count(
+                Match.select().where(Match.tournament == tournament, Match.match_status == False)
+            )
+            if tournament_games_count != 0:
+                keyboard.append(['/champ {}'.format(tournament.name)])
 
     except Sport.DoesNotExist:
         return await chat.send_text('Wow! We have no such sport')
@@ -276,7 +280,7 @@ async def show_rating(chat, match):
         top += current_user
 
     await chat.send_text(
-        'Your rank is {}.\nHere is a top 3 players:\n{}'.format(rank + 1, top)
+        'Your rank is {}.\nHere is a top 3 players:\n{}'.format(rank, top)
     )
 
 
