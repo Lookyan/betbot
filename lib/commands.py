@@ -11,7 +11,7 @@ from lib.db.models import Match
 from lib.db.models import Bet
 from lib.db.connection import psql_db
 from lib.db.connection import database_manager
-from lib.smiles import get_digit_smile
+from lib.emoji import get_digit_smile
 
 
 MAIN_MENU_STR = 'Main menu'
