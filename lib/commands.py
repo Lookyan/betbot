@@ -85,7 +85,11 @@ async def sport(chat, match):
         keyboard = []
         for tournament in tournaments:
             tournament_games_count = await database_manager.count(
-                Match.select().where(Match.tournament == tournament, Match.match_status == False)
+                Match.select().where(
+                    Match.tournament == tournament,
+                    Match.match_status == False,
+                    Match.date > datetime.utcnow()
+                )
             )
             if tournament_games_count != 0:
                 keyboard.append(['/champ {}'.format(tournament.name)])
@@ -117,7 +121,11 @@ async def championship(chat, match):
     await database_manager.update(user)
 
     matches = await database_manager.execute(
-        Match.select().where(Match.tournament == tournament, Match.match_status == False)
+        Match.select().where(
+            Match.tournament == tournament,
+            Match.match_status == False,
+            Match.date > datetime.utcnow()
+        )
     )
 
     keyboard = []
