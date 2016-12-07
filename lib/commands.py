@@ -35,7 +35,7 @@ def get_reply_markup(keyboard: list) -> dict:
 async def start(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
     markup = {
-        'keyboard': [["Choose sport"], ["Your bets"], ["My balance"], ["Show rating"]],
+        'keyboard': [["Choose sport"], ["My bets"], ["My balance"], ["Show rating"]],
         'one_time_keyboard': False
     }
     await chat.send_text(
@@ -266,7 +266,7 @@ async def amount(chat, match):
     )
 
 
-@bot.command(r'Your bets')
+@bot.command(r'My bets')
 async def your_bets(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
 
