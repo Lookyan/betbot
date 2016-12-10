@@ -85,7 +85,12 @@ def parse_odds(content):
 
 
 def parse(content, match_result=False):
-    data = content.split(JS_ROW_END)
+    if not content:
+        return
+    try:
+        data = content.split(JS_ROW_END)
+    except TypeError:
+        return
     result = {
         'games': []
     }
@@ -191,8 +196,8 @@ def compute_results(matches_results: list):
                 send_result(
                     current_user.username, POSITIVE_MESSAGE.format(
                         '{} - {}'.format(match.player1, match.player2),
-                        bet.bet_coeff * bet.amount,
-                        current_user.balance
+                        '{0:.2f}'.format(bet.bet_coeff * bet.amount),
+                        '{0:.2f}'.format(current_user.balance)
                     )
                 )
             else:
@@ -237,11 +242,13 @@ if __name__ == '__main__':
             matches_results = parse(matches_results_data)
 
             # add upcoming matches
-            logger.info('Posting to psql')
-            post_to_psql(upcoming_matches, sport)
+            if upcoming_matches:
+                logger.info('Posting to psql')
+                post_to_psql(upcoming_matches, sport)
 
-            logger.info('Sending results')
-            compute_results(matches_results['games'])
+            if matches_results:
+                logger.info('Sending results')
+                compute_results(matches_results['games'])
 
         logger.info('Waiting for next iteration')
         time.sleep(600)
