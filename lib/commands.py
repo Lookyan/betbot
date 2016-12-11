@@ -315,7 +315,7 @@ async def show_rating(chat, match):
         top += current_user
 
     await chat.send_text(
-        'Your rank is {}.\nHere is a top 3 players:\n{}'.format(rank, top)
+        'Your rank is {}.\nHere is a top 3 players:\n{}'.format(rank + 1, top)
     )
 
 
