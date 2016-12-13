@@ -7,7 +7,8 @@ from peewee import (
     IntegerField,
     FloatField,
     BooleanField,
-    DateTimeField
+    DateTimeField,
+    RawQuery
 )
 
 from .connection import psql_db
@@ -98,6 +99,14 @@ class User(BaseModel):
         return await database_manager.create_or_get(
             User,
             username=chat_id
+        )
+
+    async def get_rank(self):
+        return await database_manager.scalar(
+            RawQuery(
+                User,
+                'SELECT Count(*) FROM "user" AS t1 WHERE ("t1"."balance"::numeric > {})'.format(self.balance)
+            )
         )
 
     async def save_chosen_result(self, choice):

@@ -302,7 +302,7 @@ async def your_bets(chat, match):
 async def show_rating(chat, match):
     user, _ = await User.get_user_by_chat_id(chat.id)
 
-    rank = await database_manager.count(User.select().where(User.balance > user.balance))
+    rank = await user.get_rank()
 
     # top 3 users
     rank_table = await database_manager.execute(
