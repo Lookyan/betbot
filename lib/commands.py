@@ -213,6 +213,7 @@ async def make_bet(chat, match):
 
     await database_manager.update(user)
 
+
     await chat.send_text(
         'Please enter amount. Your balance {}'.format(user.balance),
         reply_markup=get_reply_markup([])
@@ -249,6 +250,24 @@ async def amount(chat, match):
             )
         )
 
+    user.chosen_amount = amount
+    await database_manager.update(user)
+
+
+    keyboard = [
+        ['/apply Yes'],
+        ['/decline No']
+    ]
+
+    await chat.send_text('Are you sure?', reply_markup = get_reply_markup(keyboard))
+
+
+@bot.command(r'/apply (.+)')
+async def apply(chat, match) :
+    user, _ = await User.get_user_by_chat_id(chat.id)
+
+    amount = user.chosen_amount
+
     # bet creation
 
     chosen_match = user.chosen_match
@@ -267,11 +286,18 @@ async def amount(chat, match):
     await database_manager.create(Bet, **bet)
 
     user.balance -= amount
+    user.chosen_amount = None
     await database_manager.update(user)
 
     await chat.send_text(
         'Accepted! You will be noticed about results'
     )
+
+@bot.command(r'/decline (.+)')
+async def decline(chat, match) :
+    user, _ = await User.get_user_by_chat_id(chat.id)
+
+    amount = user.chosen_amount
 
 
 @bot.command(r'My bets')
