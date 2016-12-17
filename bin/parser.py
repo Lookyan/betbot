@@ -26,20 +26,31 @@ channel.queue_declare(queue='push', durable=True)  # TODO: to config
 POSITIVE_MESSAGE = 'Your bet "{}" won! +{} Now your balance is {}'
 NEGATIVE_MESSAGE = 'Unfortunately, your bet "{}" lost.'
 
-soccer_leagues = [
-    '/england/premier-league/',
-    '/france/ligue-1/',
-    '/germany/bundesliga/',
-    '/italy/serie-a/',
-    '/netherlands/eredivisie/',
-    '/spain/laliga/',
-    '/europe/champions-league/',
-    '/europe/europa-league/',
-    '/world/world-cup/',  # world cup 2018 Russia
-    '/russia/premier-league/'
-]
+sports = {
+    'soccer': {
+        'base_url': 'http://www.soccer24.com',
+        'tournaments': [
+            '/england/premier-league/',
+            '/france/ligue-1/',
+            '/germany/bundesliga/',
+            '/italy/serie-a/',
+            '/netherlands/eredivisie/',
+            '/spain/laliga/',
+            '/europe/champions-league/',
+            '/europe/europa-league/',
+            '/world/world-cup/',  # world cup 2018 Russia
+            '/russia/premier-league/'
+        ]
+    },
+    'basketball': {
+        'base_url': 'http://www.basketball24.com',
+        'tournaments': [
+            '/italy/lega-a/',
+            '/italy/a2-west/'
+        ]
+    }
+}
 
-base_url = 'http://www.soccer24.com'
 
 JS_ROW_END = '~'
 JS_CELL_END = '¬'
@@ -71,7 +82,7 @@ def transform_to_dict(cells):
     return result_dict
 
 
-def get_odds(event_id):
+def get_odds(base_url, event_id):
     r = requests.get(base_url + '/x/feed/df_dos_2_' + event_id + '_', headers={'X-Fsign': feed_sign})
     content = r.content.decode()
     return parse_odds(content)
@@ -84,7 +95,7 @@ def parse_odds(content):
         return tuple(data['MI'].split('|'))
 
 
-def parse(content, match_result=False):
+def parse(content, base_url, match_result=False):
     if not content:
         return
     try:
@@ -108,7 +119,7 @@ def parse(content, match_result=False):
             if 'AA' in events:
                 game['event_id'] = events['AA']
                 if match_result:
-                    game['odds'] = get_odds(game['event_id'])
+                    game['odds'] = get_odds(base_url, game['event_id'])
                     if game['odds'] and '-' in game['odds']:
                         continue
             if 'AE' in events:
@@ -227,28 +238,30 @@ if __name__ == '__main__':
 
         logger.info('Starting new parsing')
 
-        sport_name = 'soccer'
-        sport, _ = Sport.get_or_create(name=sport_name)
+        for sport_name, sport_info in sports.items():
+            sport, _ = Sport.get_or_create(name=sport_name)
+            tournaments = sport_info['tournaments']
+            base_url = sport_info['base_url']
 
-        for league in soccer_leagues:
+            for league in tournaments:
 
-            r = requests.get(base_url + league)
-            content = r.content.decode()
-            soup = BeautifulSoup(content, 'html.parser')
-            upcoming_matches_data = soup.find(id='tournament-page-data-summary-fixtures').next
-            upcoming_matches = parse(upcoming_matches_data, match_result=True)
+                r = requests.get(base_url + league)
+                content = r.content.decode()
+                soup = BeautifulSoup(content, 'html.parser')
+                upcoming_matches_data = soup.find(id='tournament-page-data-summary-fixtures').next
+                upcoming_matches = parse(upcoming_matches_data, base_url, match_result=True)
 
-            matches_results_data = soup.find(id='tournament-page-data-summary-results').next
-            matches_results = parse(matches_results_data)
+                matches_results_data = soup.find(id='tournament-page-data-summary-results').next
+                matches_results = parse(matches_results_data, base_url)
 
-            # add upcoming matches
-            if upcoming_matches:
-                logger.info('Posting to psql')
-                post_to_psql(upcoming_matches, sport)
+                # add upcoming matches
+                if upcoming_matches:
+                    logger.info('Posting to psql')
+                    post_to_psql(upcoming_matches, sport)
 
-            if matches_results:
-                logger.info('Sending results')
-                compute_results(matches_results['games'])
+                if matches_results:
+                    logger.info('Sending results')
+                    compute_results(matches_results['games'])
 
         logger.info('Waiting for next iteration')
         time.sleep(600)
