@@ -35,8 +35,9 @@ class ParserTest(unittest.TestCase):
                   'und 11¬AX÷0¬BX÷-1¬WM÷BOU¬AE÷Bournemouth¬WU÷bournemouth¬WN÷SUN¬AF÷Sunderland¬WV÷sunderland¬AW÷1¬A' \
                   'N÷y¬MW÷16¬~AA÷4pPjIRW7¬AD÷1478358000¬AB÷1¬CR÷1¬AC÷1¬CX÷Burnley¬ER÷Round 11¬AX÷0¬BX÷-1¬WM÷BUR¬AE÷' \
                   'Burnley¬WU÷burnley¬WN÷CRY¬AF÷Crystal Palace¬WV÷crystal-palace¬AW÷1¬AN÷y¬MW÷16¬'
+        base_url = 'http://some-url.com'
 
-        res = parse(content)
+        res = parse(content, base_url)
         expected_res = {
             'games': [{'timestamp': '1478358000', 'home': 'Bournemouth', 'away': 'Sunderland', 'event_id': 'dKLrKm2e'},
                       {'timestamp': '1478358000', 'home': 'Burnley', 'away': 'Crystal Palace', 'event_id': '4pPjIRW7'}],
