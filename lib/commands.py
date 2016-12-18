@@ -17,7 +17,7 @@ from lib.emoji import get_digit_smile
 
 MAIN_MENU_STR = 'Main menu'
 
-bot = Bot(api_token=os.environ['API_KEY'])
+bot = Bot(api_token='283000549:AAFE4xQv-oSM3DNAet3tgTXnUyPl2ED8dO0')
 logger = logging.getLogger(__name__)
 
 
@@ -286,18 +286,31 @@ async def apply(chat, match) :
     await database_manager.create(Bet, **bet)
 
     user.balance -= amount
-    user.chosen_amount = None
     await database_manager.update(user)
 
+    markup = {
+        'keyboard': [["Choose sport"], ["My bets"], ["My balance"], ["Show rating"]],
+        'one_time_keyboard': False
+    }
+
     await chat.send_text(
-        'Accepted! You will be noticed about results'
+        'Accepted! You will be noticed about results',
+        reply_markup = json.dumps(markup)
     )
 
 @bot.command(r'/decline (.+)')
 async def decline(chat, match) :
     user, _ = await User.get_user_by_chat_id(chat.id)
 
-    amount = user.chosen_amount
+    keyboard = [
+        ['/makebet win1'],
+        ['/makebet draw'],
+        ['/makebet win2']
+    ]
+
+    await chat.send_text(
+        'OK, you can make another bet', reply_markup = get_reply_markup(keyboard)
+    )
 
 
 @bot.command(r'My bets')
