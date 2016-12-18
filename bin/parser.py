@@ -42,11 +42,11 @@ sports = {
             '/russia/premier-league/'
         ]
     },
-    'basketball': {
-        'base_url': 'http://www.basketball24.com',
+    'icehockey': {
+        'base_url': 'http://www.icehockey24.com',
         'tournaments': [
-            '/italy/lega-a/',
-            '/italy/a2-west/'
+            '/russia/khl/',
+            '/usa/nhl/'
         ]
     }
 }
